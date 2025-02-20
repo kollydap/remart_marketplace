@@ -8,7 +8,12 @@ from orders.models import Order
 @receiver(post_save, sender=Order)
 def initiate_transaction(sender, instance, created, **kwargs):
     if created:
-        Transaction.objects.create(sender=instance)
+        Transaction.objects.create(
+            order=instance,
+            sender=instance.buyer.wallet,
+            amount=instance.total_gems,
+            receiver=instance.product.owner.wallet,
+        )
 
 
 @receiver(post_save, sender=Order)
