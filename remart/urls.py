@@ -4,6 +4,9 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/products/", include("products.urls")),
+    path("api/v1/orders/", include("orders.urls")),
+    # path("api/v1/transactions/", include("transactions.urls")),
+    path("api/v1/wallets/", include("gemwallets.urls")),
     path(
         "api/v1/auth/", include("dj_rest_auth.urls")
     ),  # Login, logout, password reset, etc.

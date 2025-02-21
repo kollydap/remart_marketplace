@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -129,6 +130,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "EXCEPTION_HANDLER": "exceptions.custom_exception_handler",
 }
 
 REST_AUTH = {
@@ -136,6 +138,12 @@ REST_AUTH = {
     "JWT_AUTH_COOKIE": os.getenv("JWT_AUTH_COOKIE_KEY"),
     "JWT_AUTH_REFRESH_COOKIE": os.getenv("JWT_AUTH_REFRESH_COOKIE_KEY"),
     "REGISTER_SERIALIZER": "accounts.serializers.CustomRegisterSerializer",
+    "USER_DETAILS_SERIALIZER": "accounts.serializers.CustomUserDetailsSerializer",
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -145,9 +153,10 @@ AUTHENTICATION_BACKENDS = (
 
 
 # Email configuration for user registration
-ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_LOGIN_METHODS = {"email"}  # Change to list
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_UNIQUE_EMAIL = True  # Email should be unique
 
 
 CORS_ALLOW_ALL_ORIGINS = True

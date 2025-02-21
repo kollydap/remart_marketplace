@@ -7,6 +7,7 @@ class CustomUser(AbstractUser):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False
     )  # UUID as primary key
+    email = models.EmailField(unique=True)
 
     GENDER_CHOICES = [
         ("M", "Male"),
@@ -21,6 +22,7 @@ class CustomUser(AbstractUser):
     profile_picture = models.ImageField(
         upload_to="profile_pics/", blank=True, null=True
     )
+    device = models.CharField(max_length=250)
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
 
