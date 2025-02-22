@@ -12,11 +12,20 @@ def get_all_products(request):
     """
     Retrieves a list of all products with pagination.
     """
-    products = Product.objects.all()
+    # Order by creation date (or any other relevant field) to avoid UnorderedObjectListWarning
+    products = Product.objects.all().order_by(
+        "-created_at"
+    )  # Adjust the field as needed
+
+    # Set up pagination
     paginator = PageNumberPagination()
     paginator.page_size = 10  # Adjust as needed
     paginated_products = paginator.paginate_queryset(products, request)
+
+    # Serialize the paginated data
     serializer = ProductSerializer(paginated_products, many=True)
+
+    # Return the paginated response
     return paginator.get_paginated_response(serializer.data)
 
 

@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from orders.models import Order
+from orders.models import Order, OrderState
 from orders.serializers import OrderSerializer
 
 
@@ -41,6 +41,7 @@ def create_order(request):
     """
     Creates a new order.
     """
+
     serializer = OrderSerializer(data=request.data, context={"request": request})
     if serializer.is_valid():
         serializer.save()
@@ -77,9 +78,170 @@ def delete_order(request, pk):
     try:
         order = Order.objects.get(pk=pk)
     except Order.DoesNotExist:
-        return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"message": "Order not found."}, status=status.HTTP_404_NOT_FOUND
+        )
 
     order.delete()
     return Response(
         {"message": "Order deleted successfully."}, status=status.HTTP_204_NO_CONTENT
+    )
+
+
+# **----------------------------------------------------------------------------------**
+
+
+@api_view(["GET"])
+def accept_order(request, pk):
+    """
+    Accepts an Order by Id
+    """
+    try:
+        order = Order.objects.get(pk=pk)
+    except Order.DoesNotExist:
+        return Response(
+            {"message": "Quest failed! The order you seek is lost in the abyss."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Check if order is still in pending state
+    if order.state != OrderState.PENDING:
+        return Response(
+            {
+                "message": "Oops! This order is no longer in the waiting realm. You can't alter its destiny now."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Check if the current user is the owner of the product
+    if order.product.owner != request.user:
+        return Response(
+            {"message": "Halt, stranger! This isn't your loot to claim."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Check if the product is in stock
+    if order.product.quantity < order.quantity:
+        return Response(
+            {
+                "message": "Out of stock! You've lost a customer’s trust. Better restock before another adventurer leaves empty-handed."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    # Accept the order
+    order.state = OrderState.ACCEPTED
+    order.save()
+    # Send notification to the buyer that the order has been accepted
+    # (You can add your notification logic here)
+
+    return Response(
+        {
+            "message": "Order accepted! Your heroic deed has been recorded. The adventurer will be notified of their prize!"
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+def decline_order(request, pk):
+    """
+    Declines an Order by Id
+    """
+    try:
+        order = Order.objects.get(pk=pk)
+    except Order.DoesNotExist:
+        return Response(
+            {"message": "Quest failed! The order you seek is lost in the abyss."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Check if order is still in pending state
+    if order.state != OrderState.PENDING:
+        return Response(
+            {
+                "message": "The sands of time have shifted. This order's destiny is sealed."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Check if the current user is the owner of the product
+    if order.product.owner != request.user:
+        return Response(
+            {"message": "Halt, stranger! You lack the power to banish this order."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Decline the order
+    order.state = OrderState.DECLINED
+    order.save()
+
+    # Optionally, you can notify the buyer that the order has been declined
+    # (You can add your notification logic here)
+
+    return Response(
+        {
+            "message": "Order declined! The adventurer's hopes have been dashed, but your realm remains secure."
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+def send_gems_to_escrow(request, pk):
+    """
+    Sends gems to escrow
+    """
+    try:
+        order = Order.objects.get(pk=pk)
+    except Order.DoesNotExist:
+        return Response(
+            {"message": "Quest failed! The order you seek is lost in the abyss."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Check if order is in accepted state
+    if order.state != OrderState.ACCEPTED:
+        return Response(
+            {
+                "message": "The stars haven't aligned! Gems can only be sent for accepted orders."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Check if the current user is the buyer of the product
+    if order.buyer != request.user:
+        return Response(
+            {
+                "message": "Halt, adventurer! These gems are not yours to offer. Only the rightful buyer can proceed."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Check if the buyer has enough gems
+    if order.buyer.wallet.balance < order.total_gems:
+        return Response(
+            {
+                "message": "Insufficient gems! You must gather more wealth before embarking on this quest."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Deduct gems from buyer's wallet
+    order.buyer.wallet.balance -= order.total_gems
+    order.buyer.wallet.save()
+
+    # !todo credit the admin wallet
+
+    # Move the order to escrowed state
+    order.state = OrderState.ESCROWED
+    order.save()
+
+    # Optionally, you can notify the seller that the gems have been escrowed
+    # (You can add your notification logic here)
+
+    return Response(
+        {
+            "message": "Success! Your gems are safely stored in the ancient vault, awaiting the seller's heroic delivery."
+        },
+        status=status.HTTP_200_OK,
     )

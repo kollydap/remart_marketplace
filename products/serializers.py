@@ -37,6 +37,15 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         category_id = validated_data.pop("category_id")
-        validated_data["category"] = ProductCategory.objects.get(id=category_id)
+        
+        try:
+            validated_data["category"] = ProductCategory.objects.get(id=category_id)
+        except ProductCategory.DoesNotExist:
+            raise serializers.ValidationError(
+                {
+                    "message": "The provided category does not exist. Please check and try again."
+                }
+            )
+
         validated_data["owner"] = self.context["request"].user
         return Product.objects.create(**validated_data)

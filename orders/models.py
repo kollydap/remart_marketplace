@@ -7,8 +7,9 @@ from products.models import Product
 User = get_user_model()
 
 
-class OrderStatus(models.TextChoices):
+class OrderState(models.TextChoices):
     PENDING = "pending", "Pending"
+    DECLINED = "declined", "Declined"
     ACCEPTED = "accepted", "Accepted"
     ESCROWED = "escrowed", "Escrowed"
     SHIPPED = "shipped", "Shipped"
@@ -30,8 +31,8 @@ class Order(models.Model):
     total_gems = models.PositiveIntegerField()
     state = models.CharField(
         max_length=20,
-        choices=OrderStatus.choices,
-        default=OrderStatus.PENDING,
+        choices=OrderState.choices,
+        default=OrderState.PENDING,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
