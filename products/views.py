@@ -2,9 +2,10 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from products.models import Product, ProductView
-from products.serializers import ProductSerializer
+from products.models import Product, ProductView, ProductCategory
+from products.serializers import ProductSerializer, ProductCategorySerializer
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from django.db.models import Q
 
 
 # GET all products with advanced filtering and pagination
@@ -89,7 +90,8 @@ def get_product(request, pk):
                 product.save()
     except Product.DoesNotExist:
         return Response(
-            {"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND
+            {"message": "❌ Oops! That product has vanished."},
+            status=status.HTTP_404_NOT_FOUND,
         )
 
     serializer = ProductSerializer(product)
@@ -122,7 +124,8 @@ def update_product(request, pk):
         product = Product.objects.get(pk=pk)
     except Product.DoesNotExist:
         return Response(
-            {"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND
+            {"message": "❌ No product found to update."},
+            status=status.HTTP_404_NOT_FOUND,
         )
 
     # Exclude restricted fields
@@ -154,15 +157,18 @@ def delete_product(request, pk):
         product = Product.objects.get(pk=pk)
     except Product.DoesNotExist:
         return Response(
-            {"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND
+            {"message": "❌ Product already vanished!"},
+            status=status.HTTP_404_NOT_FOUND,
         )
 
     product.delete()
     return Response(
-        {"message": "Product deleted successfully."}, status=status.HTTP_204_NO_CONTENT
+        {"message": "🗑️ Product deleted. Poof! It's gone!"},
+        status=status.HTTP_204_NO_CONTENT,
     )
 
 
+# delete all finished products
 api_view(["DELETE"])
 
 
@@ -175,10 +181,54 @@ def delete_finished_product(request):
 
     if deleted_count > 0:
         return Response(
-            {"message": f"{deleted_count} products deleted successfully."},
+            {"message": f"🧹 {deleted_count} outdated product(s) cleaned up!"},
             status=status.HTTP_200_OK,
         )
     else:
         return Response(
-            {"message": "No products to delete."}, status=status.HTTP_404_NOT_FOUND
+            {"message": "✨ Nothing to clean. Inventory is spotless!"},
+            status=status.HTTP_404_NOT_FOUND,
         )
+
+
+@api_view(["GET"])
+def get_product_categories(request):
+    """
+    Retrieves all product categories.
+    """
+    categories = ProductCategory.objects.all()
+    serializer = ProductCategorySerializer(categories, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def search_products(request):
+    """
+    Search products by multiple keywords.
+    """
+    query = request.GET.get("query", "")
+    search_terms = query.split()  # Split by spaces to get multiple keywords
+
+    # Build a Q object to handle multiple terms
+    q_objects = Q()
+    for term in search_terms:
+        q_objects &= (
+            Q(name__icontains=term)
+            | Q(description__icontains=term)
+            | Q(category__name__icontains=term)
+        )
+
+    # Filter products using the combined Q object
+    products = Product.objects.filter(
+        q_objects, is_active=True, quantity__gt=0
+    ).distinct()
+
+    paginator = PageNumberPagination()
+    paginator.page_size = 10  # Adjust as needed
+    paginated_products = paginator.paginate_queryset(products, request)
+
+    serializer = ProductSerializer(paginated_products, many=True)
+    # Serialize the paginated data
+
+    # Return the paginated response
+    return paginator.get_paginated_response(serializer.data)

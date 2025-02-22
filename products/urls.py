@@ -16,4 +16,15 @@ urlpatterns = [
         product_views.delete_product,
         name="delete_product",
     ),
+    path(
+        "categories/",
+        product_views.get_product_categories,
+        name="product_categories",
+    ),
+    path(
+        "delete/",
+        product_views.delete_finished_product,
+        name="delete_finished_product",
+    ),
+    path("search/", property.search_products, name="search-products"),
 ]
