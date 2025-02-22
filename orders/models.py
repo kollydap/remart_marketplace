@@ -23,9 +23,9 @@ class OrderState(models.TextChoices):
 
 class Order(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
+    buyer = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="orders")
     product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name="orders"
+        Product, on_delete=models.DO_NOTHING, related_name="orders"
     )
     quantity = models.PositiveIntegerField(default=1)
     total_gems = models.PositiveIntegerField()
@@ -42,3 +42,11 @@ class Order(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class OrderDisputes(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.ForeignKey(
+        Order, related_name="orders_dispute", on_delete=models.DO_NOTHING
+    )
+    message = models.CharField(max_length=255)

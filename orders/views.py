@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from orders.models import Order, OrderState
+from orders.models import Order, OrderState, OrderDisputes
 from orders.serializers import OrderSerializer
 
 
@@ -243,5 +243,133 @@ def send_gems_to_escrow(request, pk):
         {
             "message": "Success! Your gems are safely stored in the ancient vault, awaiting the seller's heroic delivery."
         },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+def set_order_to_shipped(request, pk):
+    """
+    Sets the order state to shipped by the seller
+    """
+    try:
+        order = Order.objects.get(pk=pk)
+    except Order.DoesNotExist:
+        return Response(
+            {"message": "Quest failed! The order you seek is lost in the abyss."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Check if the order is in the escrowed state
+    if order.state != OrderState.ESCROWED:
+        return Response(
+            {
+                "message": "Patience, hero! Only orders with gems secured in the vault can be shipped."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Check if the current user is the owner of the product
+    if order.product.owner != request.user:
+        return Response(
+            {
+                "message": "Hold your horses! You are not the rightful merchant for this quest."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Check if the product is still in stock
+    if order.product.quantity < order.quantity:
+        return Response(
+            {
+                "message": "Uh-oh! Your stockpile is empty. Restock before you let the adventurer down."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Deduct the product quantity
+    order.product.quantity -= order.quantity
+    order.product.save()
+
+    # Set the order state to shipped
+    order.state = OrderState.SHIPPED
+    order.save()
+
+    # Optionally, you can notify the buyer that the order has been shipped
+    # (You can add your notification logic here)
+
+    return Response(
+        {
+            "message": "Huzzah! The package is on its journey. May the winds guide it swiftly to the buyer’s doorstep."
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+def set_order_to_completed(request, pk):
+    """
+    Sets the order state to completed
+    """
+    try:
+        order = Order.objects.get(pk=pk)
+    except Order.DoesNotExist:
+        return Response(
+            {"message": "Quest failed! The order you seek is lost in the abyss."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Only the buyer can mark the order as completed
+    if order.buyer != request.user:
+        return Response(
+            {
+                "message": "Only the adventurer who made the purchase can complete this quest."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # Check if order is in shipped state
+    if order.state != OrderState.SHIPPED:
+        return Response(
+            {
+                "message": "Hold on! The package hasn't arrived yet. Wait for its safe delivery."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    order.buyer.wallet.balance += order.total_gems
+    order.buyer.wallet.save()
+
+    order.state = OrderState.COMPLETED
+    order.save()
+
+    return Response(
+        {"message": "Congratulations! Quest completed. Your gems are well spent!"},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+def set_order_to_disputed(request, pk):
+    try:
+        order = Order.objects.get(pk=pk)
+    except Order.DoesNotExist:
+        return Response(
+            {"message": "Order lost in the abyss."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if request.user not in [order.buyer, order.product.owner]:
+        return Response(
+            {"message": "This is not your battle."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    order.state = OrderState.DISPUTED
+    order.save()
+    OrderDisputes.objects.create(order=order, message=request.data.get("message"))
+
+    return Response(
+        {"message": "Dispute raised. Awaiting council's verdict."},
         status=status.HTTP_200_OK,
     )
