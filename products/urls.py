@@ -26,5 +26,5 @@ urlpatterns = [
         product_views.delete_finished_product,
         name="delete_finished_product",
     ),
-    path("search/", property.search_products, name="search-products"),
+    path("search/", product_views.search_products, name="search-products"),
 ]
