@@ -22,6 +22,11 @@ urlpatterns = [
         name="product_categories",
     ),
     path(
+        "categories/create",
+        product_views.create_product_categories,
+        name="create_product_categories",
+    ),
+    path(
         "delete/",
         product_views.delete_finished_product,
         name="delete_finished_product",

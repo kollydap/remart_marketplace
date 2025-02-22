@@ -4,11 +4,12 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from products.models import Product, ProductView, ProductCategory
 from products.serializers import ProductSerializer, ProductCategorySerializer
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django.db.models import Q
 
 
 # GET all products with advanced filtering and pagination
+@permission_classes([AllowAny])
 @api_view(["GET"])
 def get_all_products(request):
     """
@@ -74,6 +75,7 @@ def get_my_products(request):
 
 # GET a single product by ID
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_product(request, pk):
     """
     Retrieves a single product by ID.
@@ -128,6 +130,17 @@ def update_product(request, pk):
             status=status.HTTP_404_NOT_FOUND,
         )
 
+    if product.owner != request.user:
+        if (
+            not request.user.is_staff and not request.user.is_superuser
+        ):  # Check for admin status
+            return Response(
+                {
+                    "message": "❌ You cannot do such, This loot isn't yours to get rid of !!!"
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
     # Exclude restricted fields
     restricted_fields = ["is_premium", "is_active", "is_featured"]
     product_data = {
@@ -160,6 +173,16 @@ def delete_product(request, pk):
             {"message": "❌ Product already vanished!"},
             status=status.HTTP_404_NOT_FOUND,
         )
+    if product.owner != request.user:
+        if (
+            not request.user.is_staff and not request.user.is_superuser
+        ):  # Check for admin status
+            return Response(
+                {
+                    "message": "❌ You cannot do such, This loot isn't yours to get rid of !!!"
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
     product.delete()
     return Response(
@@ -172,7 +195,7 @@ def delete_product(request, pk):
 api_view(["DELETE"])
 
 
-@permission_classes([IsAuthenticated, IsAdminUser])  # Only admin can delete
+@permission_classes([IsAdminUser])  # Only admin can delete
 def delete_finished_product(request):
     """
     Deletes all products with quantity less than 1.
@@ -192,6 +215,7 @@ def delete_finished_product(request):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_product_categories(request):
     """
     Retrieves all product categories.
@@ -201,11 +225,35 @@ def get_product_categories(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@api_view(["POST"])
+@permission_classes([IsAdminUser])
+def create_product_categories(request):
+    """
+    Creates product categories.
+    """
+    serializer = ProductCategorySerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def search_products(request):
     """
     Search products by multiple keywords.
     """
+
+    price_min = request.GET.get("min_price")
+
+    # price_max = request.GET.get("max_price")
+
+    # if price_min:
+    #     products = products.filter(price__gte=price_min)
+    # if price_max:
+    #     products = products.filter(price__lte=price_max)
     query = request.GET.get("query", "")
     search_terms = query.split()  # Split by spaces to get multiple keywords
 
