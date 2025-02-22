@@ -30,13 +30,13 @@ class TransactionStatus(models.TextChoices):
 class Transaction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order = models.OneToOneField(
-        Order, on_delete=models.CASCADE, related_name="transaction"
+        Order, on_delete=models.DO_NOTHING, related_name="transaction"
     )
     sender = models.ForeignKey(
-        GemWallet, on_delete=models.CASCADE, related_name="sent_transactions"
+        GemWallet, on_delete=models.DO_NOTHING, related_name="sent_transactions"
     )
     receiver = models.ForeignKey(
-        GemWallet, on_delete=models.CASCADE, related_name="received_transactions"
+        GemWallet, on_delete=models.DO_NOTHING, related_name="received_transactions"
     )
     amount = models.DecimalField(max_digits=20, decimal_places=2)
     state = models.CharField(

@@ -19,9 +19,7 @@ class CustomUser(AbstractUser):
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
-    profile_picture = models.ImageField(
-        upload_to="profile_pics/", blank=True, null=True
-    )
+    profile_picture = models.CharField(max_length=500)
     device = models.CharField(max_length=250)
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)

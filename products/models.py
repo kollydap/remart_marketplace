@@ -1,6 +1,8 @@
 from django.db import models
 import uuid
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from datetime import timedelta
 
 
 User = get_user_model()
@@ -29,7 +31,7 @@ class Product(models.Model):
     description = models.TextField()
     price_in_gems = models.PositiveIntegerField()
     state = models.CharField(max_length=20, choices=ProductState.choices)
-    image = models.ImageField(upload_to="product_images/", blank=True, null=True)
+    image = models.CharField(max_length=500)
     category = models.ForeignKey(
         ProductCategory, on_delete=models.CASCADE, related_name="products"
     )
@@ -48,7 +50,44 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        # Call the parent class's save() method first
+        super().save(*args, **kwargs)
 
+        # Get products with high views in the last 7 days
+        one_week_ago = timezone.now() - timedelta(days=7)
+        high_views = Product.objects.filter(
+            views__gte=100,  # Adjust the threshold as needed
+            created_at__gte=one_week_ago,
+            is_active=True,
+        )
+
+        # Get new arrivals added in the last 3 days
+        new_arrivals = Product.objects.filter(
+            created_at__gte=timezone.now() - timedelta(days=3), is_active=True
+        )
+
+        # Combine and update as featured
+        featured_products = high_views | new_arrivals
+        featured_products.update(is_featured=True)
+
+
+class ProductView(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="product_views"
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("product", "user")  # Ensure one view per user
+
+    def __str__(self):
+        return f"{self.user.username} viewed {self.product.name}"
+
+
+0
 # Location: Indicates where the product is located, useful for local pickups or delivery.
 # Quantity: For products with more than one unit available.
 # Is Active: To mark products as sold or unavailable without deleting them.

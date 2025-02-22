@@ -5,8 +5,8 @@ urlpatterns = [
     path("", order_views.get_all_orders, name="get_all_orders"),
     path("<uuid:pk>/", order_views.get_order, name="get_order"),
     path("create/", order_views.create_order, name="create_order"),
-    path("<uuid:pk>/update/", order_views.update_order, name="update_order"),
-    path("<uuid:pk>/delete/", order_views.delete_order, name="delete_order"),
+    # path("<uuid:pk>/update/", order_views.update_order, name="update_order"),
+    # path("<uuid:pk>/delete/", order_views.delete_order, name="delete_order"),
     path("<uuid:pk>/accept/", order_views.accept_order, name="accept_order"),
     path("<uuid:pk>/decline/", order_views.decline_order, name="decline_order"),
     path(

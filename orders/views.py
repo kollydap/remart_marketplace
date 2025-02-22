@@ -1,5 +1,6 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from orders.models import Order, OrderState, OrderDisputes
@@ -22,6 +23,7 @@ def get_all_orders(request):
 
 # GET a single order by ID
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_order(request, pk):
     """
     Retrieves a single order by ID.
@@ -37,6 +39,7 @@ def get_order(request, pk):
 
 # CREATE a new order
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def create_order(request):
     """
     Creates a new order.
@@ -51,47 +54,50 @@ def create_order(request):
 
 
 # UPDATE an existing order
-@api_view(["PUT"])
-def update_order(request, pk):
-    """
-    Updates an existing order by ID.
-    """
-    try:
-        order = Order.objects.get(pk=pk)
-    except Order.DoesNotExist:
-        return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+# @api_view(["PUT"])
+# @permission_classes([IsAuthenticated])
+# def update_order(request, pk):
+#     """
+#     Updates an existing order by ID.
+#     """
+#     try:
+#         order = Order.objects.get(pk=pk)
+#     except Order.DoesNotExist:
+#         return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = OrderSerializer(order, data=request.data, context={"request": request})
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
+#     serializer = OrderSerializer(order, data=request.data, context={"request": request})
+#     if serializer.is_valid():
+#         serializer.save()
+#         return Response(serializer.data)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# DELETE an order
-@api_view(["DELETE"])
-def delete_order(request, pk):
-    """
-    Deletes an order by ID.
-    """
-    try:
-        order = Order.objects.get(pk=pk)
-    except Order.DoesNotExist:
-        return Response(
-            {"message": "Order not found."}, status=status.HTTP_404_NOT_FOUND
-        )
+# # DELETE an order
+# @api_view(["DELETE"])
 
-    order.delete()
-    return Response(
-        {"message": "Order deleted successfully."}, status=status.HTTP_204_NO_CONTENT
-    )
+# def delete_order(request, pk):
+#     """
+#     Deletes an order by ID.
+#     """
+#     try:
+#         order = Order.objects.get(pk=pk)
+#     except Order.DoesNotExist:
+#         return Response(
+#             {"message": "Order not found."}, status=status.HTTP_404_NOT_FOUND
+#         )
+
+#     order.delete()
+#     return Response(
+#         {"message": "Order deleted successfully."}, status=status.HTTP_204_NO_CONTENT
+#     )
 
 
 # **----------------------------------------------------------------------------------**
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def accept_order(request, pk):
     """
     Accepts an Order by Id
@@ -143,6 +149,7 @@ def accept_order(request, pk):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def decline_order(request, pk):
     """
     Declines an Order by Id
@@ -187,6 +194,7 @@ def decline_order(request, pk):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def send_gems_to_escrow(request, pk):
     """
     Sends gems to escrow
@@ -248,6 +256,7 @@ def send_gems_to_escrow(request, pk):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def set_order_to_shipped(request, pk):
     """
     Sets the order state to shipped by the seller
@@ -307,6 +316,7 @@ def set_order_to_shipped(request, pk):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def set_order_to_completed(request, pk):
     """
     Sets the order state to completed
@@ -350,6 +360,7 @@ def set_order_to_completed(request, pk):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def set_order_to_disputed(request, pk):
     try:
         order = Order.objects.get(pk=pk)

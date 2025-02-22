@@ -1,20 +1,62 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from products.models import Product
+from products.models import Product, ProductView
 from products.serializers import ProductSerializer
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+
+
+# GET all products with advanced filtering and pagination
+@api_view(["GET"])
+def get_all_products(request):
+    """
+    Retrieves a list of all products with priority-based filtering and pagination.
+    """
+    # Base filter: Only active products with quantity > 0
+    products = Product.objects.filter(is_active=True, quantity__gt=0)
+
+    # Role-based filtering
+    if request.user.is_authenticated and request.user.is_premium:
+        # Premium users see all products
+        pass
+    else:
+        # Regular users: Exclude premium products
+        products = products.filter(is_premium=False)
+
+    # Priority ordering
+    featured = products.filter(is_featured=True)
+    new_arrivals = products.order_by("-created_at")
+    trending = products.order_by("-views")
+
+    # Combine with priority order
+    products = featured | new_arrivals | trending
+    products = products.distinct()
+
+    # Set up pagination
+    paginator = PageNumberPagination()
+    paginator.page_size = 10  # Adjust page size as needed
+    paginated_products = paginator.paginate_queryset(products, request)
+
+    # Serialize the paginated data
+    serializer = ProductSerializer(paginated_products, many=True)
+
+    # Return the paginated response
+    return paginator.get_paginated_response(serializer.data)
 
 
 # GET all products with pagination
 @api_view(["GET"])
-def get_all_products(request):
+@permission_classes([IsAuthenticated])
+def get_my_products(request):
     """
-    Retrieves a list of all products with pagination.
+    Retrieves a list of a user products with pagination.
     """
     # Order by creation date (or any other relevant field) to avoid UnorderedObjectListWarning
-    products = Product.objects.all().order_by(
-        "-created_at"
+    products = (
+        Product.objects.all()
+        .filter(owner=request.user, quantity__gt=0)
+        .order_by("-created_at")
     )  # Adjust the field as needed
 
     # Set up pagination
@@ -37,17 +79,26 @@ def get_product(request, pk):
     """
     try:
         product = Product.objects.get(pk=pk)
+        if request.user.is_authenticated:
+            viewed = ProductView.objects.filter(
+                product=product, user=request.user
+            ).exists()
+            if not viewed:
+                ProductView.objects.create(product=product, user=request.user)
+                product.views += 1
+                product.save()
     except Product.DoesNotExist:
         return Response(
             {"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND
         )
 
     serializer = ProductSerializer(product)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # CREATE a new product
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def create_product(request):
     """
     Creates a new product.
@@ -62,9 +113,10 @@ def create_product(request):
 
 # UPDATE an existing product
 @api_view(["PUT"])
+@permission_classes([IsAuthenticated])
 def update_product(request, pk):
     """
-    Updates an existing product by ID.
+    Updates an existing product by ID, excluding is_premium, is_active, and is_featured.
     """
     try:
         product = Product.objects.get(pk=pk)
@@ -73,18 +125,27 @@ def update_product(request, pk):
             {"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND
         )
 
+    # Exclude restricted fields
+    restricted_fields = ["is_premium", "is_active", "is_featured"]
+    product_data = {
+        key: value
+        for key, value in request.data.items()
+        if key not in restricted_fields
+    }
+
     serializer = ProductSerializer(
-        product, data=request.data, context={"request": request}
+        product, data=product_data, partial=True, context={"request": request}
     )
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # DELETE a product
 @api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
 def delete_product(request, pk):
     """
     Deletes a product by ID.
@@ -100,3 +161,24 @@ def delete_product(request, pk):
     return Response(
         {"message": "Product deleted successfully."}, status=status.HTTP_204_NO_CONTENT
     )
+
+
+api_view(["DELETE"])
+
+
+@permission_classes([IsAuthenticated, IsAdminUser])  # Only admin can delete
+def delete_finished_product(request):
+    """
+    Deletes all products with quantity less than 1.
+    """
+    deleted_count, _ = Product.objects.filter(quantity__lt=1).delete()
+
+    if deleted_count > 0:
+        return Response(
+            {"message": f"{deleted_count} products deleted successfully."},
+            status=status.HTTP_200_OK,
+        )
+    else:
+        return Response(
+            {"message": "No products to delete."}, status=status.HTTP_404_NOT_FOUND
+        )
