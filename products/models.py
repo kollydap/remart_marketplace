@@ -37,6 +37,9 @@ class Product(models.Model):
     )
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="products")
     location = models.CharField(max_length=255)  # Location of the product
+    # location = models.ForeignKey(
+    #     Address, on_delete=models.CASCADE, related_name="products"
+    # )
     quantity = models.PositiveIntegerField(default=1)
     is_premium = models.BooleanField(default=False)
     is_active = models.BooleanField(
