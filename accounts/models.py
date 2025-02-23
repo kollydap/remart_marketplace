@@ -23,6 +23,22 @@ class CustomUser(AbstractUser):
     device = models.CharField(max_length=250)
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
+    last_login_ip = models.GenericIPAddressField(null=True, blank=True)
+    referral_code = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    loyalty_points = models.IntegerField(default=0)
+    last_purchase_date = models.DateTimeField(null=True, blank=True)
+    registration_ip = models.GenericIPAddressField(null=True, blank=True)
+    gdpr_consent = models.BooleanField(default=False)
+
+    account_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("ACTIVE", "Active"),
+            ("SUSPENDED", "Suspended"),
+            ("BANNED", "Banned"),
+        ],
+        default="ACTIVE",
+    )
 
     def __str__(self):
         return self.username

@@ -2,6 +2,7 @@ from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework import serializers
 from gemwallets.models import GemWallet
 from django.contrib.auth import get_user_model
+from ipware import get_client_ip
 
 User = get_user_model()
 
@@ -25,6 +26,9 @@ class CustomRegisterSerializer(RegisterSerializer):
         user.first_name = self.validated_data.get("first_name")
         user.last_name = self.validated_data.get("last_name")
         user.device = self.validated_data.get("device")
+        client_ip, is_routable = get_client_ip(request)
+
+        user.registration_ip = client_ip
         user.save()
 
 
