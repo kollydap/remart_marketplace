@@ -1,7 +1,6 @@
 from rest_framework.views import exception_handler
 import re
 
-
 def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
@@ -17,13 +16,17 @@ def custom_exception_handler(exc, context):
                     required_fields.extend(re.findall(r'"([^"]*)"', error_msg))
                 elif "Unable to log in with provided credentials" in error_msg:
                     # Handle invalid login credentials error
-                    error_message = "Invalid username or password"
+                    error_message = "Invalid email or password"
             else:
                 # Handle signup/regular field errors
                 if isinstance(messages, list) and any(
                     "This field is required." in msg for msg in messages
                 ):
                     required_fields.append(field)
+                else:
+                    # Handle other field errors like duplicate username
+                    if isinstance(messages, list):
+                        error_message = messages[0]
 
         # Set the response data based on the type of error
         if required_fields:
