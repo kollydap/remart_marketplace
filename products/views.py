@@ -9,8 +9,9 @@ from django.db.models import Q
 
 
 # GET all products with advanced filtering and pagination
-@permission_classes([AllowAny])
 @api_view(["GET"])
+@permission_classes([AllowAny])
+
 def get_all_products(request):
     """
     Retrieves a list of all products with priority-based filtering and pagination.
