@@ -11,7 +11,6 @@ from django.db.models import Q
 # GET all products with advanced filtering and pagination
 @api_view(["GET"])
 @permission_classes([AllowAny])
-
 def get_all_products(request):
     """
     Retrieves a list of all products with priority-based filtering and pagination.
@@ -20,7 +19,9 @@ def get_all_products(request):
     products = Product.objects.filter(is_active=True, quantity__gt=0)
 
     # Role-based filtering
-    if request.user.is_authenticated and request.user.is_premium:
+    # if request.user.is_authenticated and request.user.is_premium:
+    if request.user.is_authenticated:
+
         # Premium users see all products
         pass
     else:
