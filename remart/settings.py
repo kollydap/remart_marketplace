@@ -20,6 +20,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "notifications.apps.NotificationsConfig",
     "accounts.apps.AccountsConfig",
     "products.apps.ProductsConfig",
     "gemwallets.apps.GemwalletsConfig",

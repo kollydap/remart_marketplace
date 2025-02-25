@@ -37,7 +37,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         category_id = validated_data.pop("category_id")
-        
+
         try:
             validated_data["category"] = ProductCategory.objects.get(id=category_id)
         except ProductCategory.DoesNotExist:

@@ -90,7 +90,22 @@ class ProductView(models.Model):
         return f"{self.user.username} viewed {self.product.name}"
 
 
-0
+# class ProductAddress(models.Model):
+#     product = models.OneToOneField(
+#         Product, on_delete=models.CASCADE, related_name="address"
+#     )
+#     street = models.CharField(max_length=255)
+#     city = models.CharField(max_length=100)
+#     state = models.CharField(max_length=100)
+#     postal_code = models.CharField(max_length=20)
+#     country = models.CharField(max_length=100)
+#     latitude = models.FloatField()
+#     longitude = models.FloatField()
+
+#     def __str__(self):
+#         return f"{self.street}, {self.city}, {self.country}"
+
+
 # Location: Indicates where the product is located, useful for local pickups or delivery.
 # Quantity: For products with more than one unit available.
 # Is Active: To mark products as sold or unavailable without deleting them.
