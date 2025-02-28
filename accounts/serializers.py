@@ -23,6 +23,12 @@ class CustomRegisterSerializer(RegisterSerializer):
     #         "last_name": self.validated_data.get("last_name", ""),
     #     }
 
+    def validate_email(self, value):
+        """Ensure email is unique"""
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
     def custom_signup(self, request, user):
         user.first_name = self.validated_data.get("first_name")
         user.last_name = self.validated_data.get("last_name")
