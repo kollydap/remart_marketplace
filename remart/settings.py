@@ -124,6 +124,7 @@ STATIC_URL = "static/"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "authentication.CookieTokenAuthentication",
         "dj_rest_auth.jwt_auth.JWTCookieAuthentication",
     ),
     # "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -170,3 +171,8 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 
 
 RISK_THRESHOLD = 60
+
+
+DJANGO_REST_AUTH = {
+    "USE_JWT": True,  # Make sure JWT is enabled
+}
