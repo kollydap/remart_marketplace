@@ -23,8 +23,8 @@ class CustomRegisterView(RegisterView):
                     key="access_token",
                     value=access_token,
                     httponly=True,
-                    secure=True,  # Set to False for local development
-                    samesite="Lax",
+                    secure=False,  # Set to False for local development
+                    samesite="None",
                     max_age=60 * 60 * 24,  # 1 day
                 )
 
@@ -33,8 +33,8 @@ class CustomRegisterView(RegisterView):
                     key="refresh_token",
                     value=refresh_token,
                     httponly=True,
-                    secure=True,
-                    samesite="Lax",
+                    secure=False,
+                    samesite="None",
                     max_age=60 * 60 * 24 * 7,  # 7 days
                 )
             del response.data["access"]
@@ -69,8 +69,8 @@ class CustomLoginView(LoginView):
                 key="access_token",
                 value=access_token,
                 httponly=True,
-                secure=True,  # Set to False for local development
-                samesite="Lax",
+                secure=False,  # Set to False for local development
+                samesite="None",
                 max_age=60 * 60 * 24,  # 1 day
             )
             del response.data["access"]
