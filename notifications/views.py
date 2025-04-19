@@ -31,6 +31,7 @@ def get_a_notification(request, pk):
     serializer = NotificationSerializer(notification)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_notification(request, pk):
@@ -38,11 +39,10 @@ def delete_notification(request, pk):
         notification = Notification.objects.get(pk=pk)
     except Notification.DoesNotExist:
         return Response(
-            {"message": "❌ Oops! That Notification has vanished."},
+            {"message": "❌ Oops! That Notification doesn't exist ."},
             status=status.HTTP_404_NOT_FOUND,
         )
     notification.delete()
     return Response(
         {"message": "deleted successfully."}, status=status.HTTP_204_NO_CONTENT
     )
-    
