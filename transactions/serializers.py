@@ -9,17 +9,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        model = Transaction
-        fields = [
-            "id",
-            "order",
-            "buyer",
-            "seller",
-            "amount",
-            "transaction_type",
-            "created_at",
-            "updated_at",
-        ]
+        model = "__all__"
         read_only_fields = [
             "id",
             "created_at",
