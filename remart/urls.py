@@ -24,7 +24,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/products/", include("products.urls")),
     path("api/v1/orders/", include("orders.urls")),
-    # path("api/v1/transactions/", include("transactions.urls")),
+    path("api/v1/transactions/", include("transactions.urls")),
     path("api/v1/wallets/", include("gemwallets.urls")),
     # Authentication endpoints
     path("api/v1/auth/signin/", CustomLoginView.as_view(), name="custom_login"),
