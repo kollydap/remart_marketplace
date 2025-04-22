@@ -73,24 +73,29 @@ def create_order(request):
 #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# # DELETE an order
-# @api_view(["DELETE"])
+# DELETE an order
+@api_view(["DELETE"])
+def delete_order(request, pk):
+    """
+    Deletes an order by ID.
+    """
+    try:
+        order = Order.objects.get(pk=pk)
+    except Order.DoesNotExist:
+        return Response(
+            {"message": "Order not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+    # Check if the current user is the owner of the order
+    if order.buyer != request.user or order.product.owner != request.user:
+        return Response(
+            {"message": "You do not have permission to delete this order."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
 
-# def delete_order(request, pk):
-#     """
-#     Deletes an order by ID.
-#     """
-#     try:
-#         order = Order.objects.get(pk=pk)
-#     except Order.DoesNotExist:
-#         return Response(
-#             {"message": "Order not found."}, status=status.HTTP_404_NOT_FOUND
-#         )
-
-#     order.delete()
-#     return Response(
-#         {"message": "Order deleted successfully."}, status=status.HTTP_204_NO_CONTENT
-#     )
+    order.delete()
+    return Response(
+        {"message": "Order deleted successfully."}, status=status.HTTP_204_NO_CONTENT
+    )
 
 
 # **----------------------------------------------------------------------------------**
@@ -122,7 +127,7 @@ def accept_order(request, pk):
     # Check if the current user is the owner of the product
     if order.product.owner != request.user:
         return Response(
-            {"message": "Halt, stranger! This isn't your loot to claim."},
+            {"message": "Halt, You lack the power to accept this order."},
             status=status.HTTP_403_FORBIDDEN,
         )
 
@@ -174,7 +179,7 @@ def decline_order(request, pk):
     # Check if the current user is the owner of the product
     if order.product.owner != request.user:
         return Response(
-            {"message": "Halt, stranger! You lack the power to banish this order."},
+            {"message": "Halt, You lack the powers to decline an order."},
             status=status.HTTP_403_FORBIDDEN,
         )
 
