@@ -102,19 +102,56 @@ def get_product(request, pk):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# CREATE a new product
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_product(request):
     """
-    Creates a new product.
-    """
-    serializer = ProductSerializer(data=request.data, context={"request": request})
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    Creates a new product with support for multiple images.
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    Expected request format:
+    {
+        "name": "Product Name",
+        "description": "Product Description",
+        "price_in_gems": 100,
+        "state": "new",
+        "image": "main_image_url.jpg",  # Optional main image (legacy support)
+        "uploaded_images": [  # Optional list of additional images
+            "image1_url.jpg",
+            "image2_url.jpg"
+        ],
+        "category_id": "uuid-of-category",
+        "location": "Product Location",
+        "quantity": 1,
+        "is_premium": false,
+        "is_active": true
+    }
+    """
+    try:
+        serializer = ProductSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            product = serializer.save()
+
+            # Get fresh data including the images relationship
+            result = ProductSerializer(product).data
+
+            return Response(
+                {"message": "Product created successfully", "product": result},
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(
+            {"message": "Failed to create product", "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    except Exception as e:
+        return Response(
+            {
+                "message": "An error occurred while creating the product",
+                "error": str(e),
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 # UPDATE an existing product

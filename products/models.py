@@ -75,6 +75,22 @@ class Product(models.Model):
         featured_products.update(is_featured=True)
 
 
+class ProductImage(models.Model):
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="images"
+    )
+    image = models.CharField(max_length=500)
+    is_primary = models.BooleanField(default=False)  # To mark the main image
+    order = models.PositiveIntegerField(default=0)  # For ordering images
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "created_at"]  # Default ordering
+
+    def __str__(self):
+        return f"Image for {self.product.name}"
+
+
 class ProductView(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(
