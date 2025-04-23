@@ -1,13 +1,38 @@
 from rest_framework import serializers
-
 from transactions.models import Transaction
 
 
 class TransactionSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Transaction model.
-    """
+    sender_name = serializers.SerializerMethodField()
+    receiver_name = serializers.SerializerMethodField()
+    product_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Transaction
-        fields = "__all__"
+        fields = [
+            "id",
+            "order",
+            "sender",
+            "receiver",
+            "amount",
+            "state",
+            "status",
+            "signature",
+            "created_at",
+            "updated_at",
+            "sender_name",
+            "receiver_name",
+            "product_name",
+        ]
+
+    def get_sender_name(self, obj):
+        return obj.sender.user.get_full_name() or obj.sender.user.username
+
+    def get_receiver_name(self, obj):
+        return obj.receiver.user.get_full_name() or obj.receiver.user.username
+
+    def get_product_name(self, obj):
+        try:
+            return obj.order.product.name
+        except AttributeError:
+            return "Unknown Product"
