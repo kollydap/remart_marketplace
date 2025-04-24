@@ -54,6 +54,16 @@ class CustomUser(AbstractUser):
 User = get_user_model()
 
 
+class TransactionPin(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    pin = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Transaction Pin for {self.user.username}"
+
+
 class SuspiciousActivity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     previous_ip = models.GenericIPAddressField()

@@ -6,6 +6,13 @@ from rest_framework.authtoken.models import Token
 from rest_framework import status
 import logging
 
+# views.py
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from accounts.models import TransactionPin
+from accounts.serializers import TransactionPinSerializer
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -84,3 +91,35 @@ class CustomLogoutView(LogoutView):
         response = super().post(request, *args, **kwargs)
         response.delete_cookie("auth_token")  # Clear token cookie
         return response
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_transaction_pin(request):
+    if TransactionPin.objects.filter(user=request.user).exists():
+        return Response(
+            {"detail": "PIN already set."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    serializer = TransactionPinSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["PUT", "PATCH"])
+@permission_classes([IsAuthenticated])
+def update_transaction_pin(request):
+    try:
+        pin = TransactionPin.objects.get(user=request.user)
+    except TransactionPin.DoesNotExist:
+        return Response(
+            {"detail": "No PIN found to update."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = TransactionPinSerializer(pin, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

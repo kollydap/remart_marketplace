@@ -1,11 +1,23 @@
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework import serializers
 from gemwallets.models import GemWallet
-from accounts.models import Address
+from accounts.models import Address, TransactionPin
 from django.contrib.auth import get_user_model
 from ipware import get_client_ip
 
 User = get_user_model()
+
+
+class TransactionPinSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransactionPin
+        fields = ["id", "user", "pin", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
+
+    def validate_pin(self, value):
+        if not value.isdigit() or len(value) != 6:
+            raise serializers.ValidationError("PIN must be a 6-digit number.")
+        return value
 
 
 class CustomRegisterSerializer(RegisterSerializer):

@@ -23,5 +23,3 @@ def get_my_wallet(request):
     serializer = GemWalletSerializer(wallet)
     return Response(serializer.data)
 
-
-@api
