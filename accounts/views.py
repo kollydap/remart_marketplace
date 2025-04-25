@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 import logging
+from django.contrib.auth import authenticate
 
 # views.py
 from rest_framework.decorators import api_view, permission_classes
@@ -101,6 +102,21 @@ def create_transaction_pin(request):
             {"detail": "PIN already set."}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    # Step 1: Get password from request
+    password = request.data.get("password")
+    if not password:
+        return Response(
+            {"detail": "Password is required."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Step 2: Authenticate the user
+    user = authenticate(username=request.user.username, password=password)
+    if user is None:
+        return Response(
+            {"detail": "Invalid password."}, status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    # Step 3: Validate and save transaction PIN
     serializer = TransactionPinSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save(user=request.user)
