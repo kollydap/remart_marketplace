@@ -28,3 +28,5 @@ def get_user_transactions(request):
     paginated_transaction = paginator.paginate_queryset(transactions, request)
     serializer = TransactionSerializer(paginated_transaction, many=True)
     return paginator.get_paginated_response(serializer.data)
+
+

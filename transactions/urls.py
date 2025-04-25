@@ -1,6 +1,8 @@
 from django.urls import path
 
 import transactions.views as transaction_views
+from accounts.views import create_transaction_pin, update_transaction_pin
+
 
 urlpatterns = [
     path(
@@ -12,4 +14,6 @@ urlpatterns = [
     # path("create/", transaction_views.create_transaction, name="create_transaction"),
     # path("<uuid:pk>/update/", transaction_views.update_transaction, name="update_transaction"),
     # path("<uuid:pk>/delete/", transaction_views.delete_transaction, name="delete_transaction"),
+    path("pin/create/", create_transaction_pin, name="pin-create"),
+    path("pin/update/", update_transaction_pin, name="pin-update"),
 ]
