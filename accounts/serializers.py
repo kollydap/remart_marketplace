@@ -12,7 +12,7 @@ class TransactionPinSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionPin
         fields = ["id", "user", "pin", "created_at", "updated_at"]
-        read_only_fields = ["created_at", "updated_at"]
+        read_only_fields = ["id", "user", "created_at", "updated_at"]
 
     def validate_pin(self, value):
         if not value.isdigit() or len(value) != 6:
