@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from orders.models import Order, OrderState, OrderDisputes
 from orders.serializers import OrderSerializer
+from products.models import Product
 
 
 # GET all orders with pagination
@@ -16,6 +17,47 @@ def get_all_orders(request):
     orders = Order.objects.all()
     paginator = PageNumberPagination()
     paginator.page_size = 10  # Adjust as needed
+    paginated_orders = paginator.paginate_queryset(orders, request)
+    serializer = OrderSerializer(paginated_orders, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+
+# GET all orders for a specific user
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user_orders(request):
+    """
+    Retrieves a list of all orders for the authenticated user
+    either as a buyer or as a product owner.
+    """
+    user = request.user
+    orders = Order.objects.filter(Q(buyer=user) | Q(product__owner=user)).distinct()
+
+    paginator = PageNumberPagination()
+    paginator.page_size = 10
+    paginated_orders = paginator.paginate_queryset(orders, request)
+    serializer = OrderSerializer(paginated_orders, many=True)
+
+    return paginator.get_paginated_response(serializer.data)
+
+
+# GET all orders for a specific product
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_product_orders(request, pk):
+    """
+    Retrieves a list of all orders for a specific product.
+    """
+    try:
+        product = Product.objects.get(pk=pk)
+    except Product.DoesNotExist:
+        return Response(
+            {"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    orders = Order.objects.filter(product=product)
+    paginator = PageNumberPagination()
+    paginator.page_size = 10
     paginated_orders = paginator.paginate_queryset(orders, request)
     serializer = OrderSerializer(paginated_orders, many=True)
     return paginator.get_paginated_response(serializer.data)
