@@ -385,6 +385,14 @@ def set_order_to_completed(request, pk):
             },
             status=status.HTTP_403_FORBIDDEN,
         )
+        
+    if order.state == OrderState.COMPLETED:
+        return Response(
+            {
+                "message": "Hold on! This order has been completed."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
 
     # Check if order is in shipped state
     if order.state != OrderState.SHIPPED:
@@ -402,7 +410,7 @@ def set_order_to_completed(request, pk):
     order.save()
 
     return Response(
-        {"message": "Congratulations! Quest completed. Your gems are well spent!"},
+        {"message": "Congratulations!. Your gems are well spent!"},
         status=status.HTTP_200_OK,
     )
 

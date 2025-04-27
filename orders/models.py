@@ -13,6 +13,7 @@ class OrderState(models.TextChoices):
     ACCEPTED = "accepted", "Accepted"
     ESCROWED = "escrowed", "Escrowed"
     SHIPPED = "shipped", "Shipped"
+    # RECEIVED = "received", "Recieved"
     COMPLETED = "completed", "Completed"
     DISPUTED = "disputed", "Disputed"
     CANCELLED = "cancelled", "Cancelled"
