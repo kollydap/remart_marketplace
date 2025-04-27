@@ -6,6 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from orders.models import Order, OrderState, OrderDisputes
 from orders.serializers import OrderSerializer
 from products.models import Product
+from django.db.models import Q
 
 
 # GET all orders with pagination
