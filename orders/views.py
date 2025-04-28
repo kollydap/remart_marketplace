@@ -7,6 +7,7 @@ from orders.models import Order, OrderState, OrderDisputes
 from orders.serializers import OrderSerializer
 from products.models import Product
 from django.db.models import Q
+from accounts.models import TransactionPin
 
 
 # GET all orders with pagination
@@ -241,12 +242,32 @@ def decline_order(request, pk):
     )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def send_gems_to_escrow(request, pk):
     """
     Sends gems to escrow
     """
+    # Check if the user has set a transaction pin
+    pin = request.data.get("pin")
+    if not pin:
+        return Response(
+            {"detail": "Pin is required."}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        transaction_pin = TransactionPin.objects.get(user=request.user)
+    except TransactionPin.DoesNotExist:
+        return Response(
+            {"detail": "Transaction pin not set. Please set up your pin first."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if transaction_pin.pin != pin:
+        return Response(
+            {"detail": "Incorrect pin. Access denied."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
     try:
         order = Order.objects.get(pk=pk)
     except Order.DoesNotExist:
@@ -385,12 +406,10 @@ def set_order_to_completed(request, pk):
             },
             status=status.HTTP_403_FORBIDDEN,
         )
-        
+
     if order.state == OrderState.COMPLETED:
         return Response(
-            {
-                "message": "Hold on! This order has been completed."
-            },
+            {"message": "Hold on! This order has been completed."},
             status=status.HTTP_403_FORBIDDEN,
         )
 
