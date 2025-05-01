@@ -49,7 +49,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         category_id = validated_data.pop("category_id")
-        uploaded_images = validated_data.pop("uploaded_images", [])
+        uploaded_images = validated_data.pop("images", [])
 
         # Keep the main image field for backward compatibility
         main_image = validated_data.get("image")
