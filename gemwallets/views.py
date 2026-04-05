@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from gemwallets.models import GemWallet
 from gemwallets.serializers import GemWalletSerializer
+from django.db import transaction
 
 
 # GET logged-in user's wallet balance
@@ -45,7 +46,7 @@ def transfer_to_user(request):
             {"error": "Recipient wallet not found."}, status=status.HTTP_404_NOT_FOUND
         )
     try:
-        amount = float(request.data["amount"])
+        amount = int(request.data["amount"])
     except (ValueError, TypeError):
         return Response(
             {"error": "Invalid amount."}, status=status.HTTP_400_BAD_REQUEST
@@ -59,9 +60,10 @@ def transfer_to_user(request):
         return Response(
             {"error": "Insufficient funds."}, status=status.HTTP_400_BAD_REQUEST
         )
-    wallet.balance -= amount
-    recipient_wallet.balance += amount
-    wallet.save()
-    recipient_wallet.save()
+    with transaction.atomic():
+        wallet.balance -= amount
+        recipient_wallet.balance += amount
+        wallet.save()
+        recipient_wallet.save()
 
     return Response({"message": "transfer successful"}, status=status.HTTP_200_OK)

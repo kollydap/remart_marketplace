@@ -12,6 +12,7 @@ from accounts.models import TransactionPin
 
 # GET all orders with pagination
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_all_orders(request):
     """
     Retrieves a list of all orders with pagination.
@@ -119,6 +120,7 @@ def create_order(request):
 
 # DELETE an order
 @api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
 def delete_order(request, pk):
     """
     Deletes an order by ID.
@@ -145,7 +147,7 @@ def delete_order(request, pk):
 # **----------------------------------------------------------------------------------**
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def accept_order(request, pk):
     """
@@ -197,7 +199,7 @@ def accept_order(request, pk):
     )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def decline_order(request, pk):
     """
@@ -324,7 +326,7 @@ def send_gems_to_escrow(request, pk):
     )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def set_order_to_shipped(request, pk):
     """
@@ -384,7 +386,7 @@ def set_order_to_shipped(request, pk):
     )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def set_order_to_completed(request, pk):
     """
@@ -422,8 +424,9 @@ def set_order_to_completed(request, pk):
             status=status.HTTP_403_FORBIDDEN,
         )
 
-    order.buyer.wallet.balance += order.total_gems
-    order.buyer.wallet.save()
+    # Release escrowed gems to the seller
+    order.product.owner.wallet.balance += order.total_gems
+    order.product.owner.wallet.save()
 
     order.state = OrderState.COMPLETED
     order.save()

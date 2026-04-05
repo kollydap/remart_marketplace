@@ -231,10 +231,8 @@ def delete_product(request, pk):
 
 
 # delete all finished products
-api_view(["DELETE"])
-
-
-@permission_classes([IsAdminUser])  # Only admin can delete
+@api_view(["DELETE"])
+@permission_classes([IsAdminUser])
 def delete_finished_product(request):
     """
     Deletes all products with quantity less than 1.
@@ -285,14 +283,6 @@ def search_products(request):
     Search products by multiple keywords.
     """
 
-    price_min = request.GET.get("min_price")
-
-    # price_max = request.GET.get("max_price")
-
-    # if price_min:
-    #     products = products.filter(price__gte=price_min)
-    # if price_max:
-    #     products = products.filter(price__lte=price_max)
     query = request.GET.get("query", "")
     search_terms = query.split()  # Split by spaces to get multiple keywords
 

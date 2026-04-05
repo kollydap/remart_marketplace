@@ -1,12 +1,7 @@
 from pathlib import Path
-import os
 from datetime import timedelta
-from dotenv import load_dotenv
 import dj_database_url
 from decouple import config
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,6 +24,7 @@ INSTALLED_APPS = [
     "transactions.apps.TransactionsConfig",
     "orders.apps.OrdersConfig",
     "rest_framework",
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -77,16 +73,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "remart.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -148,8 +134,8 @@ REST_FRAMEWORK = {
 
 REST_AUTH = {
     "USE_JWT": True,
-    "JWT_AUTH_COOKIE": os.getenv("JWT_AUTH_COOKIE_KEY"),
-    "JWT_AUTH_REFRESH_COOKIE": os.getenv("JWT_AUTH_REFRESH_COOKIE_KEY"),
+    "JWT_AUTH_COOKIE": config("JWT_AUTH_COOKIE_KEY", default="access_token"),
+    "JWT_AUTH_REFRESH_COOKIE": config("JWT_AUTH_REFRESH_COOKIE_KEY", default="refresh_token"),
     "REGISTER_SERIALIZER": "accounts.serializers.CustomRegisterSerializer",
     "USER_DETAILS_SERIALIZER": "accounts.serializers.CustomUserDetailsSerializer",
 }
@@ -183,6 +169,3 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 RISK_THRESHOLD = 60
 
 
-DJANGO_REST_AUTH = {
-    "USE_JWT": True,  # Make sure JWT is enabled
-}

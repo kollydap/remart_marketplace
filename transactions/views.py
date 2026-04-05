@@ -10,6 +10,7 @@ from django.db.models import Q
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_user_transactions(request):
     """
     Retrieves a list of all user-related transactions with pagination.

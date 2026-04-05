@@ -90,7 +90,8 @@ class CustomLoginView(LoginView):
 class CustomLogoutView(LogoutView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
-        response.delete_cookie("auth_token")  # Clear token cookie
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
         return response
 
 
